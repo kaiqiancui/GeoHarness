@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from geoharness.schemas import Diagnostic, GeoSkillResult
-from geoharness.store import ArtifactStore
+from geoharness.store import ArtifactStore, deduplicate_diagnostics
 from geoharness.tools.raster import clip_by_aoi_artifact, compute_index, load_raster
 from geoharness.tools.stats import write_measure_report, zonal_statistics
 from geoharness.tools.vector import load_vector
@@ -47,6 +47,7 @@ def _summary(store: ArtifactStore, results: list[GeoSkillResult]) -> dict:
         for result in results
         for diagnostic in result.diagnostics
     ]
+    diagnostics = deduplicate_diagnostics(diagnostics)
     status = "failed" if any(result.status == "failed" for result in results) else "success"
     if status == "success" and any(result.status == "warning" for result in results):
         status = "warning"
