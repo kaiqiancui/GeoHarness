@@ -49,7 +49,9 @@ conda run -n rsiip python -m pytest
 
 ## OSCD Real-Data Experiment
 
-Download the OSCD images and test labels into `data/oscd/raw/`, then run:
+OSCD support is an experimental real-data workflow. It is not bundled with the
+repo; manually download the OSCD images and test labels into `data/oscd/raw/`
+before running it. This workflow depends on Pillow for label resizing.
 
 ```bash
 conda run -n rsiip python examples/prepare_oscd.py
