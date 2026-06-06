@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "geoharness"
+version = "0.1.0"
+description = "Artifact-centric execution and feedback for remote-sensing workflows."
+requires-python = ">=3.10"
+dependencies = [
+  "numpy",
+  "pandas",
+  "rasterio",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
