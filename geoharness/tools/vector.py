@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from geoharness.feedback import validate_vector_artifact
 from geoharness.schemas import Diagnostic, GeoArtifact, GeoSkillResult, status_from_diagnostics
 from geoharness.store import ArtifactStore
 
@@ -87,44 +88,6 @@ def load_vector(store: ArtifactStore, artifact_id: str, path: str | Path) -> Geo
         diagnostics=diagnostics,
         provenance={"tool": "LoadVector"},
     )
-
-
-def validate_vector_artifact(artifact: GeoArtifact) -> list[Diagnostic]:
-    diagnostics: list[Diagnostic] = []
-    if artifact.type != "vector":
-        diagnostics.append(
-            Diagnostic(
-                code="invalid_artifact_type",
-                severity="fatal",
-                message=f"Expected vector artifact, got {artifact.type}.",
-                artifact_id=artifact.id,
-                check_name="validate_vector",
-                measured_value=artifact.type,
-            )
-        )
-    if artifact.bounds is None:
-        diagnostics.append(
-            Diagnostic(
-                code="missing_bounds",
-                severity="fatal",
-                message="Vector artifact has no spatial bounds.",
-                artifact_id=artifact.id,
-                check_name="validate_vector",
-            )
-        )
-    geometry_count = artifact.metadata.get("geometry_count")
-    if not isinstance(geometry_count, int) or geometry_count < 1:
-        diagnostics.append(
-            Diagnostic(
-                code="empty_vector",
-                severity="fatal",
-                message="Vector artifact contains no geometries.",
-                artifact_id=artifact.id,
-                check_name="validate_vector",
-                measured_value=geometry_count,
-            )
-        )
-    return diagnostics
 
 
 def geojson_geometries(geojson: dict[str, Any]) -> list[dict[str, Any]]:
