@@ -11,6 +11,29 @@ ResultStatus = Literal["success", "warning", "failed"]
 
 
 @dataclass
+class GeoSkillSpec:
+    name: str
+    family: str
+    input_schema: dict[str, Any]
+    output_schema: dict[str, Any]
+    preconditions: list[str] = field(default_factory=list)
+    diagnostics: list[dict[str, Any]] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class GeoSkillCall:
+    tool_name: str
+    arguments: dict[str, Any]
+    expected_output_schema: dict[str, Any] | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
 class Diagnostic:
     code: str
     severity: Severity
