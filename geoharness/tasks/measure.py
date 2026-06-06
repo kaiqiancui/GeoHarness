@@ -4,8 +4,9 @@ from pathlib import Path
 
 from geoharness.schemas import Diagnostic, GeoSkillResult
 from geoharness.store import ArtifactStore
-from geoharness.tools.raster import clip_by_aoi, compute_index, load_raster
+from geoharness.tools.raster import clip_by_aoi_artifact, compute_index, load_raster
 from geoharness.tools.stats import write_measure_report, zonal_statistics
+from geoharness.tools.vector import load_vector
 
 
 def run_measure_workflow(
@@ -20,7 +21,11 @@ def run_measure_workflow(
     if results[-1].status == "failed":
         return _summary(store, results)
 
-    results.append(clip_by_aoi(store, "raw_scene", aoi_path, "clipped_scene"))
+    results.append(load_vector(store, "aoi_vector", aoi_path))
+    if results[-1].status == "failed":
+        return _summary(store, results)
+
+    results.append(clip_by_aoi_artifact(store, "raw_scene", "aoi_vector", "clipped_scene"))
     if results[-1].status == "failed":
         return _summary(store, results)
 

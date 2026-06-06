@@ -11,6 +11,7 @@ from rasterio.mask import mask
 
 from geoharness.schemas import Diagnostic, GeoArtifact, GeoSkillResult, status_from_diagnostics
 from geoharness.store import ArtifactStore
+from geoharness.tools.vector import geojson_geometries, validate_vector_artifact
 
 
 def raster_artifact(
@@ -85,20 +86,64 @@ def clip_by_aoi(
     aoi_geojson_path: str | Path,
     output_id: str,
 ) -> GeoSkillResult:
+    return _clip_by_aoi(
+        store,
+        raster_id,
+        aoi_geojson_path,
+        output_id,
+        parents=[raster_id],
+        provenance={"tool": "ClipByAOI", "aoi": str(aoi_geojson_path)},
+        diagnostic_artifact_id=raster_id,
+    )
+
+
+def clip_by_aoi_artifact(
+    store: ArtifactStore,
+    raster_id: str,
+    aoi_id: str,
+    output_id: str,
+) -> GeoSkillResult:
+    aoi = store.get(aoi_id)
+    diagnostics = validate_vector_artifact(aoi)
+    if any(diagnostic.severity == "fatal" for diagnostic in diagnostics):
+        store.record_diagnostics(diagnostics)
+        return GeoSkillResult(status="failed", diagnostics=diagnostics)
+
+    return _clip_by_aoi(
+        store,
+        raster_id,
+        aoi.path,
+        output_id,
+        parents=[raster_id, aoi_id],
+        provenance={"tool": "ClipByAOI", "aoi": aoi_id, "aoi_path": aoi.path},
+        diagnostic_artifact_id=aoi_id,
+    )
+
+
+def _clip_by_aoi(
+    store: ArtifactStore,
+    raster_id: str,
+    aoi_geojson_path: str | Path,
+    output_id: str,
+    *,
+    parents: list[str],
+    provenance: dict,
+    diagnostic_artifact_id: str,
+) -> GeoSkillResult:
     source = store.get(raster_id)
     output_path = store.artifact_path(output_id, ".tif")
     diagnostics = validate_raster_artifact(source)
 
     with open(aoi_geojson_path, encoding="utf-8") as handle:
         geojson = json.load(handle)
-    geometries = _geojson_geometries(geojson)
+    geometries = geojson_geometries(geojson)
     if not geometries:
         diagnostics.append(
             Diagnostic(
                 code="empty_aoi",
                 severity="fatal",
                 message="AOI GeoJSON contains no polygon geometries.",
-                artifact_id=raster_id,
+                artifact_id=diagnostic_artifact_id,
                 check_name="clip_by_aoi",
             )
         )
@@ -113,7 +158,7 @@ def clip_by_aoi(
                     code="aoi_outside_raster",
                     severity="fatal",
                     message=str(exc),
-                    artifact_id=raster_id,
+                    artifact_id=diagnostic_artifact_id,
                     check_name="clip_by_aoi",
                     suggested_actions=["check_aoi_bounds", "select_overlapping_raster"],
                 )
@@ -134,8 +179,8 @@ def clip_by_aoi(
     artifact = raster_artifact(
         output_id,
         output_path,
-        parents=[raster_id],
-        provenance={"tool": "ClipByAOI", "aoi": str(aoi_geojson_path)},
+        parents=parents,
+        provenance=provenance,
         bands=source.bands,
     )
     diagnostics.extend(validate_raster_artifact(artifact))
@@ -325,18 +370,3 @@ def _valid_ratio(array: np.ndarray, nodata: float | int | None) -> float:
     else:
         valid = array != nodata
     return float(valid.sum() / valid.size)
-
-
-def _geojson_geometries(geojson: dict) -> list[dict]:
-    if geojson.get("type") == "FeatureCollection":
-        return [
-            feature["geometry"]
-            for feature in geojson.get("features", [])
-            if feature.get("geometry") is not None
-        ]
-    if geojson.get("type") == "Feature":
-        geometry = geojson.get("geometry")
-        return [geometry] if geometry else []
-    if geojson.get("type") in {"Polygon", "MultiPolygon"}:
-        return [geojson]
-    return []
