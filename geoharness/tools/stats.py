@@ -81,15 +81,31 @@ def write_measure_report(
     output_path = store.artifact_path(output_id, ".md")
     frame = pd.read_csv(table.path)
     row = frame.iloc[0].to_dict()
-    text = (
-        f"# {title}\n\n"
-        f"- Source artifact: `{row['artifact_id']}`\n"
-        f"- Valid pixels: {int(row['valid_pixels'])}\n"
-        f"- Mean value: {row['mean']:.4f}\n"
-        f"- Median value: {row['median']:.4f}\n"
-        f"- Min / max: {row['min']:.4f} / {row['max']:.4f}\n\n"
-        "This report is generated from the artifact graph metadata and CSV output.\n"
-    )
+    columns = set(row.keys())
+
+    lines = [f"# {title}", ""]
+    if "artifact_id" in row:
+        lines.append(f"- Source artifact: `{row['artifact_id']}`")
+    if "valid_pixels" in row:
+        lines.append(f"- Valid pixels: {int(row['valid_pixels'])}")
+
+    if "mean" in row:
+        lines.append(f"- Mean value: {row['mean']:.4f}")
+        lines.append(f"- Median value: {row['median']:.4f}" if "median" in row else "")
+        lines.append(f"- Min / max: {row['min']:.4f} / {row['max']:.4f}" if "min" in row and "max" in row else "")
+
+    if "positive_pixels" in row:
+        lines.append(f"- Positive pixels (detected): {int(row['positive_pixels'])}")
+        if "positive_pixel_ratio" in row:
+            lines.append(f"- Positive pixel ratio: {row['positive_pixel_ratio']:.4f}")
+        if "estimated_area" in row and row["estimated_area"]:
+            lines.append(f"- Estimated area: {row['estimated_area']:.2f} {row.get('area_unit', '')}")
+        if "area_unit" in row:
+            lines.append(f"- Area unit: {row['area_unit']}")
+
+    lines.append("")
+    lines.append("This report is generated from the artifact graph metadata and CSV output.")
+    text = "\n".join(line for line in lines if line is not None) + "\n"
     Path(output_path).write_text(text, encoding="utf-8")
     artifact = GeoArtifact(
         id=output_id,

@@ -15,6 +15,7 @@ from geoharness.experiments.fixtures import (  # noqa: E402
     copy_with_high_nodata,
     write_aoi_geojson,
 )
+from geoharness.agents.feedback_agent import run_feedback_agent  # noqa: E402
 from geoharness.experiments.raw_workflows import raw_measure_workflow  # noqa: E402
 from geoharness.synthetic import write_synthetic_measure_fixture  # noqa: E402
 from geoharness.tasks.measure import run_measure_workflow  # noqa: E402
@@ -62,6 +63,7 @@ def run_case(workdir: Path, case: dict) -> list[dict]:
     rows.append(run_raw(workdir, case))
     rows.append(run_geoskill(workdir, case))
     rows.append(run_geoskill_validators(workdir, case))
+    rows.append(run_geoskill_feedback_agent(workdir, case))
     return rows
 
 
@@ -110,6 +112,31 @@ def run_geoskill_validators(workdir: Path, case: dict) -> dict:
     )
 
 
+def run_geoskill_feedback_agent(workdir: Path, case: dict) -> dict:
+    result = run_feedback_agent(
+        store_root=workdir / "geoskill_feedback_agent" / case["case"] / "store",
+        raster_path=case["raster"],
+        aoi_path=case["aoi"],
+        diagnostics_visible=True,
+        recovery_enabled=True,
+    )
+    diagnostics = [
+        code
+        for entry in result.get("trace", [])
+        for code in entry.get("diagnostics", [])
+    ]
+    return _row(
+        case,
+        "geoskill_feedback_agent",
+        result["status"],
+        diagnostics,
+        artifact_count=result.get("artifact_count"),
+        provenance_rate=None,  # FeedbackAgent returns dict artifacts not GeoArtifact
+        recovery_attempted=result.get("recovery_attempted", False),
+        recovery_success=result.get("recovery_success", False),
+    )
+
+
 def _row(
     case: dict,
     interface: str,
@@ -117,6 +144,8 @@ def _row(
     diagnostics: list[str],
     artifact_count: int | None,
     provenance_rate: float | None,
+    recovery_attempted: bool = False,
+    recovery_success: bool = False,
 ) -> dict:
     expected = case["expected"]
     return {
@@ -128,6 +157,8 @@ def _row(
         "diagnostic_codes": ",".join(diagnostics),
         "artifact_count": artifact_count,
         "provenance_rate": provenance_rate,
+        "recovery_attempted": recovery_attempted,
+        "recovery_success": recovery_success,
     }
 
 

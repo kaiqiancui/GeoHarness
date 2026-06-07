@@ -61,3 +61,5 @@ outputs/
 artifacts/
 runs/
 data/
+geoharness.egg-info/
+syy/

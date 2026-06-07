@@ -14,6 +14,7 @@ def run_measure_workflow(
     store_root: str | Path,
     raster_path: str | Path,
     aoi_path: str | Path,
+    index_name: str = "NDVI",
 ) -> dict:
     store = ArtifactStore(store_root)
     results: list[GeoSkillResult] = []
@@ -29,7 +30,7 @@ def run_measure_workflow(
     if results[-1].status == "failed":
         return _summary(store, results)
 
-    results.append(compute_index(store, "clipped_scene", "ndvi_raster", index_name="NDVI"))
+    results.append(compute_index(store, "clipped_scene", "ndvi_raster", index_name=index_name))
     if results[-1].status == "failed":
         return _summary(store, results)
 
@@ -37,7 +38,7 @@ def run_measure_workflow(
     if results[-1].status == "failed":
         return _summary(store, results)
 
-    results.append(write_measure_report(store, "ndvi_statistics", "measure_report", title="NDVI Measure Workflow"))
+    results.append(write_measure_report(store, "ndvi_statistics", "measure_report", title=f"{index_name} Measure Workflow"))
     return _summary(store, results)
 
 

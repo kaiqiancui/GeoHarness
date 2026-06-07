@@ -11,6 +11,7 @@ from rasterio.mask import mask
 from geoharness.feedback import validate_index_range, validate_raster_artifact, validate_vector_artifact
 from geoharness.schemas import Diagnostic, GeoArtifact, GeoSkillResult, status_from_diagnostics
 from geoharness.store import ArtifactStore
+from geoharness.tools.indices import INDEX_SPECS, index_bands
 from geoharness.tools.vector import geojson_geometries
 
 
@@ -200,10 +201,31 @@ def compute_index(
     output_id: str,
     *,
     index_name: str = "NDVI",
-    band_names: tuple[str, str] = ("nir", "red"),
+    band_names: tuple[str, str] | None = None,
 ) -> GeoSkillResult:
+    """Compute a spectral index.
+
+    If *band_names* is omitted, required bands are looked up from INDEX_SPECS.
+    """
     source = store.get(raster_id)
     diagnostics = validate_raster_artifact(source)
+
+    if band_names is None:
+        spec = INDEX_SPECS.get(index_name)
+        if spec is None:
+            diagnostics.append(
+                Diagnostic(
+                    code="unsupported_index",
+                    severity="fatal",
+                    message=f"Unsupported index: {index_name}. Available: {list(INDEX_SPECS)}",
+                    artifact_id=raster_id,
+                    check_name="compute_index",
+                )
+            )
+            store.record_diagnostics(diagnostics)
+            return GeoSkillResult(status="failed", diagnostics=diagnostics)
+        band_names = spec["bands"]
+
     bands = source.bands or []
     missing = [name for name in band_names if name not in bands]
     if missing:
@@ -249,7 +271,7 @@ def compute_index(
         provenance={
             "tool": "ComputeIndex",
             "index": index_name,
-            "formula": f"({band_names[0]} - {band_names[1]}) / ({band_names[0]} + {band_names[1]})",
+            "formula": INDEX_SPECS.get(index_name, {}).get("formula", "unknown"),
         },
         bands=[index_name.lower()],
     )
