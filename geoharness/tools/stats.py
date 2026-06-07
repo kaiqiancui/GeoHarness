@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 import rasterio
 
+from geoharness.feedback import validate_raster_artifact
 from geoharness.schemas import Diagnostic, GeoArtifact, GeoSkillResult, status_from_diagnostics
 from geoharness.store import ArtifactStore
-from geoharness.tools.raster import validate_raster_artifact
 
 
 def zonal_statistics(
