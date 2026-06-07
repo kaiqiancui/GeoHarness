@@ -2,6 +2,9 @@
 requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.packages.find]
+include = ["geoharness*"]
+
 [project]
 name = "geoharness"
 version = "0.1.0"
