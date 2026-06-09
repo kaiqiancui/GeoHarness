@@ -1,0 +1,8 @@
+numpy
+pandas
+Pillow
+rasterio
+matplotlib
+networkx
+tabulate
+pytest

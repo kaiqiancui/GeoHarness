@@ -15,6 +15,9 @@ dependencies = [
   "pandas",
   "Pillow",
   "rasterio",
+  "matplotlib",
+  "networkx",
+  "tabulate",
 ]
 
 [project.optional-dependencies]
