@@ -66,7 +66,18 @@ def zonal_statistics(
         status=status_from_diagnostics(diagnostics),
         artifacts=[artifact],
         diagnostics=diagnostics,
-        provenance={"tool": "ZonalStatistics", "input": raster_id},
+        provenance={
+            "tool": "ZonalStatistics",
+            "input": raster_id,
+            "summary": {
+                "valid_pixels": valid_count,
+                "mean": float(np.mean(values)),
+                "median": float(np.median(values)),
+                "min": float(np.min(values)),
+                "max": float(np.max(values)),
+                "std": float(np.std(values)),
+            },
+        },
     )
 
 

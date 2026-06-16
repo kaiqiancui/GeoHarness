@@ -12,6 +12,7 @@ description = "Artifact-centric execution and feedback for remote-sensing workfl
 requires-python = ">=3.10"
 dependencies = [
   "numpy",
+  "openai",
   "pandas",
   "Pillow",
   "rasterio",

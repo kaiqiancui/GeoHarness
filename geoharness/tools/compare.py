@@ -269,7 +269,22 @@ def change_statistics(
         status=status_from_diagnostics(diagnostics),
         artifacts=[artifact],
         diagnostics=diagnostics,
-        provenance={"tool": "ChangeStatistics", "input": delta_id},
+        provenance={
+            "tool": "ChangeStatistics",
+            "input": delta_id,
+            "summary": {
+                "valid_pixels": int(values.size),
+                "mean_delta": float(np.mean(values)),
+                "median_delta": float(np.median(values)),
+                "min_delta": float(np.min(values)),
+                "max_delta": float(np.max(values)),
+                "std_delta": float(np.std(values)),
+                "positive_change_pixels": positive,
+                "negative_change_pixels": negative,
+                "large_change_pixels": large,
+                "large_change_threshold": large_change_threshold,
+            },
+        },
     )
 
 
