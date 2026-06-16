@@ -38,7 +38,8 @@ GeoHarness emits structured diagnostics (code, severity, artifact_id, check_name
 
 ```bash
 # Install (Python 3.10+)
-pip install -e ".[dev]"
+pip install -r requirements.txt
+pip install -e .
 
 # Run tests
 python -m pytest
@@ -70,6 +71,7 @@ All experiments write outputs under `runs/`.
 | `summarize_experiments.py` | Generate experiment_overview + severity_calibration tables |
 | `run_oscd_threshold_eval.py` | OSCD delta NDVI threshold baseline + oracle evaluation |
 | `run_oscd_cva_eval.py` | OSCD CVA (Change Vector Analysis) percentile baseline |
+| `plot_report_charts.py` | Generate report figures from experiment summaries |
 
 ## OSCD Real-Data Experiment
 
@@ -83,6 +85,7 @@ python examples/summarize_oscd_results.py           # oscd_summary.csv
 python examples/run_oscd_threshold_eval.py          # delta NDVI threshold baseline
 python examples/run_oscd_cva_eval.py                # CVA baseline (multi-band)
 python examples/visualize_oscd.py --city brasilia
+python examples/plot_report_charts.py
 ```
 
 ## Current Results Summary
